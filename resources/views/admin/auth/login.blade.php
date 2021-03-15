@@ -28,13 +28,13 @@
                 </div>
 
                 <div class="card-body">
-                    <form method="POST" action="#">
+                    <form method="POST" action="{{ route('logged_in') }}">
                         @csrf
                         <div class="form-group">
-                            <label for="name">{{ __('Username') }}</label>
-                            <input type="text" id="name" class="form-control @error('name') is-invalid @enderror"
-                                name="name" value="{{ old('name') }}" autofocus />
-                            @error('name')
+                            <label for="name">{{ __('Email') }}</label>
+                            <input type="email" id="email" class="form-control @error('email') is-invalid @enderror"
+                                name="email" value="{{ old('email') }}" autofocus />
+                            @error('email')
                             <span class="invalid-feedback" role="alert">
                                 {{ $message }}
                             </span>

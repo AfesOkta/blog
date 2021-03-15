@@ -1,6 +1,6 @@
 <footer class="main-footer">
         <div class="footer-left">
-          Copyright &copy; 2018 <div class="bullet"></div> Design By <a href="https://nauval.in/">Muhamad Nauval Azhar</a>
+          Copyright &copy; 2021 <div class="bullet"></div> Design By <a href="https://getstisla.com//">Stisla</a>
         </div>
         <div class="footer-right">
 
@@ -26,5 +26,9 @@
   <!-- Template JS File -->
   <script src="{{ asset('assets/js/scripts.js') }}"></script>
   <script src="{{ asset('assets/js/custom.js') }}"></script>
+
+  @yield('plugins')
+
+  @yield('js')
 </body>
 </html>

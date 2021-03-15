@@ -44,4 +44,22 @@ class UserController extends Controller
             return back();
         }
     }
+
+    public function authenticate(Request  $request)
+    {
+        # code...
+        $credentials = $request->only('email', 'password');
+        if (Auth::attempt($credentials)) {
+            // Jika berhasil login
+            return redirect(route('home'));
+            //return redirect()->intended('/details');
+        }
+        // Jika Gagal
+        return redirect('login');
+    }
+
+    public function index()
+    {
+        return view('admin.user.index');
+    }
 }
