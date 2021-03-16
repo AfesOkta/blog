@@ -51,11 +51,12 @@
 @endsection
 
 @section('plugin')
-    <script src="{{asset('assets/modules/datatables/datatables.js')}}"></script>
-    <script src="{{asset('assets/modules/jquery-toast/jquery.toast.min.js')}}"></script>
+
 @endsection
 
 @section('js')
+    <script src="{{asset('assets/modules/datatables/datatables.js')}}"></script>
+    <script src="{{asset('assets/modules/jquery-toast/jquery.toast.min.js')}}"></script>
     <script>
         function open_container()
         {

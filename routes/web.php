@@ -67,6 +67,13 @@ Route::group([
     ], function () {
 
     Route::get('/', [\App\Http\Controllers\CategoryController::class, 'index'])->name('category');
+    Route::get('/json', [\App\Http\Controllers\CategoryController::class, 'json'])->name('category.json');
+
+    Route::get('/get/{id}', [\App\Http\Controllers\CategoryController::class, 'edit'])->name('category.edit');
+
+    Route::post('/store', [\App\Http\Controllers\CategoryController::class, 'store'])->name('category.store');
+    Route::post('/update', [\App\Http\Controllers\CategoryController::class, 'update'])->name('category.update');
+    Route::post('/delete', [\App\Http\Controllers\CategoryController::class, 'destroy'])->name('category.delete');
 });
 
 Route::group([
