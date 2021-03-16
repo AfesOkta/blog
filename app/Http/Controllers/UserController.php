@@ -7,10 +7,17 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Repository\UserRepository;
 use Illuminate\Support\Facades\DB;
+use Yajra\DataTables\Facades\DataTables;
 
 class UserController extends Controller
 {
+    protected $userRepo;
+    public function __construct(UserRepository $userRepo) {
+        $this->userRepo = $userRepo;
+    }
+
     // User Register Page
     public function register_user_page()
     {
@@ -61,5 +68,22 @@ class UserController extends Controller
     public function index()
     {
         return view('admin.user.index');
+    }
+
+    public function json()
+    {
+        # code...
+        $data = $this->userRepo->findAll();
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('action', function($row){
+                return '<a href="javascript:void(0)" onclick="edit('.$row->id.')"
+                    title="Edit '.$row->name.'" class="btn btn-info btn-sm btn-icon" data-dismiss="modal"><i class="fas fa-edit">&nbsp;edit</i></a>
+                    <a href="javascript:void(0)" onclick="hapus('.$row->id.')"
+                    title="Delete '.$row->name.'" class="btn btn-danger btn-sm btn-icon" data-dismiss="modal"><i class="fas fa-trash">&nbsp;delete</i></a>
+                    ';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 }

@@ -56,6 +56,13 @@ Route::group([
     ], function () {
 
     Route::get('/', [\App\Http\Controllers\TagsController::class, 'index'])->name('tag');
+    Route::get('/json', [\App\Http\Controllers\TagsController::class, 'json'])->name('tag.json');
+
+    Route::get('/get/{id}', [\App\Http\Controllers\TagsController::class, 'edit'])->name('tag.edit');
+
+    Route::post('/store', [\App\Http\Controllers\TagsController::class, 'store'])->name('tag.store');
+    Route::post('/update', [\App\Http\Controllers\TagsController::class, 'update'])->name('tag.update');
+    Route::post('/delete', [\App\Http\Controllers\TagsController::class, 'destroy'])->name('tag.delete');
 });
 
 Route::group([
@@ -91,5 +98,12 @@ Route::group([
     'middleware' => 'auth'
     ], function () {
         Route::get('/', [\App\Http\Controllers\UserController::class, 'index'])->name('user');
+        Route::get('/json', [\App\Http\Controllers\UserController::class, 'json'])->name('user.json');
+
+        Route::get('/get/{id}', [\App\Http\Controllers\UserController::class, 'edit'])->name('user.edit');
+
+        Route::post('/store', [\App\Http\Controllers\UserController::class, 'store'])->name('user.store');
+        Route::post('/update', [\App\Http\Controllers\UserController::class, 'update'])->name('user.update');
+        Route::post('/delete', [\App\Http\Controllers\UserController::class, 'destroy'])->name('user.delete');
     }
 );

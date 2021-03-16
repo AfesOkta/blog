@@ -3,11 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Tags;
+use App\Repository\TagRepository;
+use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables;
 
 class TagsController extends Controller
 {
+    protected $tagRepo;
+    public function __construct(TagRepository $tagRepo) {
+        $this->tagRepo = $tagRepo;
+    }
     /**
      * Display a listing of the resource.
      *
@@ -16,8 +25,24 @@ class TagsController extends Controller
     public function index()
     {
         //
-        $tag = Tags::paginate(10);
-        return view('admin.tag.index', compact('tag'));
+        return view('admin.tag.index');
+    }
+
+    public function json()
+    {
+        # code...
+        $data = $this->tagRepo->findAll();
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->addColumn('action', function($row){
+                return '<a href="javascript:void(0)" onclick="edit('.$row->id.')"
+                    title="Edit '.$row->name.'" class="btn btn-info btn-sm btn-icon" data-dismiss="modal"><i class="fas fa-edit">&nbsp;edit</i></a>
+                    <a href="javascript:void(0)" onclick="hapus('.$row->id.')"
+                    title="Delete '.$row->name.'" class="btn btn-danger btn-sm btn-icon" data-dismiss="modal"><i class="fas fa-trash">&nbsp;delete</i></a>
+                    ';
+            })
+            ->rawColumns(['action'])
+            ->make(true);
     }
 
     /**
@@ -40,16 +65,42 @@ class TagsController extends Controller
     public function store(Request $request)
     {
         //
-        $this->validate($request, [
-            'name' => 'required|max:20|min:3'
-        ]);
+        try {
 
-        Tags::create([
-            'name' => $request->name,
-            'slug' => Str::slug($request->name)
-        ]);
+            $this->validate($request, [
+                'name' => 'required|max:20|min:3'
+            ]);
 
-        return redirect()->back()->with('success','Data berhasil disimpan');
+            $data = [
+                'name' => $request->name,
+                'slug' => Str::slug($request->name)
+            ];
+            $find = $this->tagRepo->findByName($request->name);
+            if (is_null($find)){
+                DB::beginTransaction();
+                $tag = $this->tagRepo->save($data);
+                DB::commit();
+                $data = [
+                    'status' => true,
+                    'message' => 'Tags berhasil disimpan'
+                ];
+            }else{
+                $data = [
+                    'status' => false,
+                    'message' => 'Tags sudah ada'
+                ];
+            }
+
+        }catch(Exception $ex) {
+            DB::rollBack();
+            Log::debug($ex->getMessage());
+            $data = [
+                'status' => false,
+                'message' => 'Tag tidak berhasil disimpan'
+            ];
+        }
+
+        return response()->json($data);
     }
 
     /**
@@ -69,11 +120,11 @@ class TagsController extends Controller
      * @param  \App\Models\Tags  $tags
      * @return \Illuminate\Http\Response
      */
-    public function edit(Tags $tags)
+    public function edit($id)
     {
         //
-        $tags = Tags::findorfail($id);
-        return view('admin.tag.edit', compact('tags'));
+        $data   = $this->tagRepo->findById($id);
+        return response()->json($data);
     }
 
     /**
@@ -83,21 +134,36 @@ class TagsController extends Controller
      * @param  \App\Models\Tags  $tags
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         //
-        $this->validate($request,[
-            'name' => 'required|max:20|min:3'
-        ]);
+        try {
+            $this->validate($request,[
+                'name' => 'required|max:20|min:3'
+            ]);
+            $tag_data = [
+                'name' => $request->name,
+                'slug' => Str::slug($request->name)
+            ];
+            DB::beginTransaction();
+            $update = $this->tagRepo->update($tag_data, $request->tag_id);
+            DB::commit();
 
-        $tag_data = [
-            'name' => $request->name,
-            'slug' => Str::slug($request->name)
-        ];
+            $data = [
+                'status' => true,
+                'message' => 'Tag berhasil disimpan'
+            ];
 
-        Tags::whereId($id)->update($tag_data);
+        }catch(Exception $ex) {
+            DB::rollBack();
+            Log::debug($ex->getMessage());
+            $data = [
+                'status' => false,
+                'message' => 'Tag tidak berhasil disimpan'
+            ];
+        }
 
-        return redirect()->route('tag.index')->with('success','Data sudah diupdate');
+        return response()->json($data);
     }
 
     /**
@@ -106,12 +172,21 @@ class TagsController extends Controller
      * @param  \App\Models\Tags  $tags
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Request $req)
     {
         //
-        $tags = Tags::findorfail($id);
-        $tags->delete();
-
-        return redirect()->back()->with('success','Data berhasil dihapus');
+        $tag = $this->tagRepo->delete($req->id);
+        if($tag) {
+            $data = [
+                'status' => true,
+                'message' => 'Kategori berhasil dihapus'
+            ];
+        }else{
+            $data = [
+                'status' => false,
+                'message' => 'Kategori tidak berhasil dihapus'
+            ];
+        }
+        return response()->json($data);
     }
 }

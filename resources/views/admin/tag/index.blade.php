@@ -37,29 +37,16 @@
         <div class="card-body">
             <div class="col-lg-12">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover table-sm table-bordered">
+                    <table class="table table-striped table-hover table-sm table-bordered" id="table-1">
                         <thead>
                             <tr>
                                 <th>No</th>
                                 <th>Nama Tag</th>
+                                <th>Slug</th>
                                 <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach ($tag as $result => $hasil)
-                            <tr>
-                                <td>{{ $result + $tag->firstitem() }}</td>
-                                <td>{{ $hasil->name }}</td>
-                                <td>
-                                    <form action="{{ route('tag.destroy', $hasil->id )}}" method="POST">
-                                        @csrf
-                                        @method('delete')
-                                    <a href="{{ route('tag.edit', $hasil->id ) }}" class="btn btn-primary btn-sm">Edit</a>
-                                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                    </form>
-                                </td>
-                            </tr>
-                            @endforeach
 
                         </tbody>
                     </table>
@@ -67,20 +54,95 @@
             </div>
         </div>
     </div>
-	{{ $tag->links() }}
 
     @include('admin.components.modal')
 @endsection
 
 @section('plugin')
-    <script src="{{asset('assets/modules/datatables/datatables.js')}}"></script>
-    <script src="{{asset('assets/modules/jquery-toast/jquery.toast.min.js')}}"></script>
+
 @endsection
 
 @section('js')
+    <script src="{{asset('assets/modules/datatables/datatables.js')}}"></script>
+    <script src="{{asset('assets/modules/jquery-toast/jquery.toast.min.js')}}"></script>
     <script>
 
-        $(document).off('focusin.modal');
+        $(function () {
+            var table = $('#table-1').DataTable({
+                //dom: '<"col-md-6"l><"col-md-6"f>rt<"col-md-6"i><"col-md-6"p>',
+                processing: true,
+                serverSide: true,
+                method: 'get',
+                ajax: '{{route('tag.json')}}',
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: true, orderable: true},
+                    // {data: 'user_posyandu.posyandu_kode', name: 'user_posyandu.posyandu_kode', searchable: true, orderable: true},
+                    {data: 'name', name: 'name', searchable: true, orderable: true},
+                    {data: 'slug', name: 'slug', searchable: true, orderable: true},
+                    {data: 'action', className: 'tdCenter', searchable: false, orderable: false}
+                ],
+            });
+
+            $('body #composemodal').on('click','.save',function(e){
+                e.preventDefault();
+                let name = $('.name_').val();
+                let tag_id = $('.tag_id').val();
+                $('.save').attr("disabled","disabled");
+                if (name == '' || name == null || name == undefined) {
+                    $.toast({
+                        heading: 'Warning',
+                        text: 'Tag harus diisi !!!',
+                        showHideTransition: 'plain',
+                        icon: 'warning'
+                    });
+                    $('.save').removeAttr("disabled");
+                }else{
+                    if (tag_id == null || tag_id == "" || tag_id == undefined) {
+                        url = "{{route('tag.store')}}";
+                    }else{
+                        url = "{{route('tag.update')}}";
+                    }
+                    $.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            name: name,
+                            tag_id: tag_id,
+                        },
+                        url: url,
+                        success: function (data) {
+                            if (data.status) {
+                                $.toast({
+                                    heading: 'Success',
+                                    text: data.message,
+                                    showHideTransition: 'slide',
+                                    icon: 'success'
+                                }),
+                                location.reload();
+                            } else {
+                                $.toast({
+                                    heading: 'Error',
+                                    text: data.message,
+                                    showHideTransition: 'plain',
+                                    icon: 'error'
+                                });
+                                $('.save').removeAttr("disabled");
+                            }
+                        },
+                        error: function (data) {
+                            $.toast({
+                                heading: 'Error',
+                                text: data.message,
+                                showHideTransition: 'plain',
+                                icon: 'error'
+                            });
+                            $('.save').removeAttr("disabled");
+                        }
+                    });
+                }
+            });
+        });
 
         function open_container()
         {
@@ -90,7 +152,7 @@
                                 '<div class="col-lg-12 col-sm-12">'+
                                     '<div class="form-group">'+
                                         // '<label for="nama_">Nama Kategori</label>'+
-                                        '<input type="text" class="form-control nama_" id="nama_" placeholder="Nama Tag">'+
+                                        '<input type="text" class="form-control name_" id="name_" placeholder="Nama Tag">'+
                                     '</div>'+
                                 '</div>'+
                             '</div>';
@@ -109,5 +171,81 @@
             $('.modal-dialog').attr('class','modal-dialog');
         }
 
+        var edit = function(id) {
+            $.ajax({
+                type: "get",
+                url: "{{ url('tag/get') }}/"+id,
+                dataType: "json",
+                success: function(data) {
+                    console.log(data);
+                    var content =
+                                    '<div class="row">'+
+                                        '<div class="col-lg-12 col-sm-12">'+
+                                            '<div class="form-group">'+
+                                                '<input type="text" class="form-control name_" id="name_" value="'+data.name+'" placeholder="Nama Tag">'+
+                                                '<input type="text" class="form-control tag_id" maxlength="5" id="tag_id" placeholder="Id kader" value="'+data.id+'" style="display:none">'+
+                                            '</div>'+
+                                        '</div>'+
+                                    '</div>';
+                    var title   = 'Edit Tag';
+                    // var footer  = '<button type="button" class="btn btn-primary">Save changes</button>';
+                    setModalBox(content, title);
+                    $('#composemodal').modal('show');
+                },
+                error: function() {
+                    $.toast({
+                        heading: 'Error',
+                        text: "Kategori tidak ditemukan",
+                        showHideTransition: 'plain',
+                        icon: 'error'
+                    })
+                }
+            })
+        }
+
+        var hapus = function(id){
+            swal({
+                title: "Yakin?",
+                text: "Data Tag mau dihapus?",
+                type: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "Ya, hapus saja!",
+                closeOnConfirm: false
+            }).then(function () {
+                $.ajax({
+                    type: "POST",
+                    dataType: 'json',
+                    data: {_token: '{{ csrf_token() }}', id: id},
+                    url: "{{ route('tag.delete') }}",
+                    success: function (data) {
+                        if (data.status) {
+                            $.toast({
+                                    heading: 'Success',
+                                    text: data.message,
+                                    showHideTransition: 'slide',
+                                    icon: 'success'
+                                }),
+                            location.reload();
+                        } else {
+                            $.toast({
+                                heading: 'Error',
+                                text: "Data kader tidak dapat dihapus",
+                                showHideTransition: 'plain',
+                                icon: 'error'
+                            })
+                        }
+                    },
+                    error: function (data) {
+                        $.toast({
+                            heading: 'Error',
+                            text: "Data kader tidak ditemukan",
+                            showHideTransition: 'plain',
+                            icon: 'error'
+                        })
+                    }
+                });
+            });
+        }
     </script>
 @endsection

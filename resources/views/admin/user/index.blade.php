@@ -33,7 +33,6 @@
                         <th class="text-center thColor">
                         #
                         </th>
-                        {{-- <th class="tdLeft thColor">Posyandu</th> --}}
                         <th class="tdLeft thColor">Username</th>
                         <th class="tdLeft thColor">Email</th>
                         <th class="tdCenter thColor">Action</th>
@@ -58,6 +57,83 @@
     <script src="{{asset('assets/modules/datatables/datatables.js')}}"></script>
     <script src="{{asset('assets/modules/jquery-toast/jquery.toast.min.js')}}"></script>
     <script>
+
+        $(function () {
+            var table = $('#table-1').DataTable({
+                //dom: '<"col-md-6"l><"col-md-6"f>rt<"col-md-6"i><"col-md-6"p>',
+                processing: true,
+                serverSide: true,
+                method: 'get',
+                ajax: '{{route('user.json')}}',
+                columns: [
+                    {data: 'DT_RowIndex', name: 'DT_RowIndex', searchable: true, orderable: true},
+                    {data: 'name', name: 'name', searchable: true, orderable: true},
+                    {data: 'email', name: 'email', searchable: true, orderable: true},
+                    {data: 'action', className: 'tdCenter', searchable: false, orderable: false}
+                ],
+            });
+
+            $('body #composemodal').on('click','.save',function(e){
+                e.preventDefault();
+                let name = $('.name_').val();
+                let tag_id = $('.tag_id').val();
+                $('.save').attr("disabled","disabled");
+                if (name == '' || name == null || name == undefined) {
+                    $.toast({
+                        heading: 'Warning',
+                        text: 'Tag harus diisi !!!',
+                        showHideTransition: 'plain',
+                        icon: 'warning'
+                    });
+                    $('.save').removeAttr("disabled");
+                }else{
+                    if (tag_id == null || tag_id == "" || tag_id == undefined) {
+                        url = "{{route('tag.store')}}";
+                    }else{
+                        url = "{{route('tag.update')}}";
+                    }
+                    $.ajax({
+                        type: "POST",
+                        dataType: "json",
+                        data: {
+                            _token: '{{ csrf_token() }}',
+                            name: name,
+                            tag_id: tag_id,
+                        },
+                        url: url,
+                        success: function (data) {
+                            if (data.status) {
+                                $.toast({
+                                    heading: 'Success',
+                                    text: data.message,
+                                    showHideTransition: 'slide',
+                                    icon: 'success'
+                                }),
+                                location.reload();
+                            } else {
+                                $.toast({
+                                    heading: 'Error',
+                                    text: data.message,
+                                    showHideTransition: 'plain',
+                                    icon: 'error'
+                                });
+                                $('.save').removeAttr("disabled");
+                            }
+                        },
+                        error: function (data) {
+                            $.toast({
+                                heading: 'Error',
+                                text: data.message,
+                                showHideTransition: 'plain',
+                                icon: 'error'
+                            });
+                            $('.save').removeAttr("disabled");
+                        }
+                    });
+                }
+            });
+        });
+
         function open_container()
         {
             // var size='standard';
